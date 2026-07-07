@@ -20,6 +20,11 @@ public class SecurityConfig {
     @org.springframework.beans.factory.annotation.Value("${cors.allowed.origins:http://localhost:5173,http://localhost:3000}")
     private List<String> allowedOrigins;
 
+    @jakarta.annotation.PostConstruct
+    public void logOrigins() {
+        System.out.println(">>> CORS LOG: Loaded Allowed Origins = " + allowedOrigins);
+    }
+
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
@@ -27,6 +32,7 @@ public class SecurityConfig {
             .csrf(csrf -> csrf.disable())
             .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
             .authorizeHttpRequests(authorize -> authorize
+                .requestMatchers(org.springframework.http.HttpMethod.OPTIONS, "/**").permitAll()
                 .requestMatchers("/api/auth/sync").authenticated()
                 .requestMatchers("/api/expenses/**").authenticated()
                 .requestMatchers("/api/ai/**").authenticated()
