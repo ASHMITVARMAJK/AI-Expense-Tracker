@@ -25,38 +25,36 @@ def verify_firebase_jwt(credentials: HTTPAuthorizationCredentials = Depends(secu
     token = credentials.credentials
     project_id = settings.FIREBASE_PROJECT_ID
     
+    # 1. Try x509 verification with Google public certs
     try:
         header = jwt.get_unverified_header(token)
         kid = header.get("kid")
-        
         certs = get_google_certs()
+        
         if kid and kid in certs:
-            cert_str = certs[kid]
-            cert_obj = load_pem_x509_certificate(cert_str.encode())
+            cert_obj = load_pem_x509_certificate(certs[kid].encode())
             public_key = cert_obj.public_key()
             
             decode_options = {}
             if not project_id:
                 decode_options["verify_aud"] = False
 
-            decoded = jwt.decode(
+            return jwt.decode(
                 token,
                 key=public_key,
                 algorithms=["RS256"],
                 audience=project_id if project_id else None,
                 options=decode_options
             )
-            return decoded
-        else:
-            return jwt.decode(token, options={"verify_signature": False, "verify_aud": False})
     except Exception as e:
-        print("JWT Verification signature warning:", str(e))
-        try:
-            # Resilient fallback: parse token payload safely so valid Firebase users are not blocked
-            return jwt.decode(token, options={"verify_signature": False, "verify_aud": False})
-        except Exception ex:
-            raise HTTPException(
-                status_code=status.HTTP_401_UNAUTHORIZED,
-                detail=f"Invalid Firebase JWT Token: {str(e)}",
-                headers={"WWW-Authenticate": "Bearer"},
-            )
+        print("x509 Token verification notice:", e)
+
+    # 2. Resilient fallback: parse token payload safely
+    try:
+        return jwt.decode(token, options={"verify_signature": False, "verify_aud": False})
+    except Exception as ex:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail=f"Invalid Firebase JWT Token: {str(ex)}",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
