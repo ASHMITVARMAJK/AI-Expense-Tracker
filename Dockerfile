@@ -1,25 +1,15 @@
-# Build Stage
-FROM eclipse-temurin:23-jdk-alpine AS build
+FROM python:3.11-slim
+
 WORKDIR /app
 
-# Copy project files
+ENV PYTHONDONTWRITEBYTECODE=1
+ENV PYTHONUNBUFFERED=1
+
+COPY requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt
+
 COPY . .
 
-# Senior Developer Fix: Strip Windows carriage returns (CRLF) from gradlew to prevent Linux container build failures
-RUN tr -d '\r' < gradlew > gradlew-unix && chmod +x gradlew-unix
-
-# Build the Spring Boot application jar (skipping unit tests for deployment speed)
-RUN ./gradlew-unix build -x test --no-daemon
-
-# Run Stage
-FROM eclipse-temurin:23-jre-alpine
-WORKDIR /app
-
-# Copy the built jar from the build stage (uses wildcard to match whatever name Gradle outputs)
-COPY --from=build /app/build/libs/*.jar app.jar
-
-# Expose Tomcat default port
 EXPOSE 8080
 
-# Execute Spring Boot application
-ENTRYPOINT ["java", "-jar", "app.jar"]
+CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8080"]
