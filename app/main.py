@@ -7,8 +7,12 @@ from app.database import engine, Base
 from app.routers import auth, expenses, ai
 
 # Create database tables automatically if they don't exist
-Base.metadata.create_all(bind=engine)
-print(">>> DATABASE CONNECTED:", engine.url)
+try:
+    Base.metadata.create_all(bind=engine)
+    print(">>> DATABASE CONNECTED:", engine.url.render_as_string(hide_password=True))
+except Exception as e:
+    # Don't crash the whole app (health check, CORS) if the DB is unreachable
+    print(">>> DATABASE CONNECTION FAILED:", e)
 
 app = FastAPI(title="SpendAI Python Backend", version="1.0.0")
 
