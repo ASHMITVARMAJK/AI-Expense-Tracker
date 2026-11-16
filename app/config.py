@@ -56,5 +56,5 @@ def get_db_url(url: str) -> str:
         url = url[len("jdbc:"):]
     for prefix in ("postgresql+psycopg://", "postgresql+psycopg2://", "postgres://", "postgresql://"):
         if url.startswith(prefix):
-            return "postgresql://" + url[len(prefix):]
+            return "postgresql+psycopg2://" + url[len(prefix):]
     return url
