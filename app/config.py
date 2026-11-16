@@ -50,7 +50,11 @@ class Settings(BaseSettings):
 settings = Settings()
 
 def get_db_url(url: str) -> str:
-    if url.startswith("jdbc:postgresql://"):
-        return url.replace("jdbc:postgresql://", "postgresql://")
+    """Normalise any DB URL (jdbc:, quotes, postgres://, +psycopg) to a psycopg2 URL."""
+    url = (url or "").strip().strip("'\" ")
+    if url.startswith("jdbc:"):
+        url = url[len("jdbc:"):]
+    for prefix in ("postgresql+psycopg://", "postgresql+psycopg2://", "postgres://", "postgresql://"):
+        if url.startswith(prefix):
+            return "postgresql://" + url[len(prefix):]
     return url
-
