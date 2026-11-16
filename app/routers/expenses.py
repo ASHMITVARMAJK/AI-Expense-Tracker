@@ -111,13 +111,14 @@ def get_dashboard_summary(
         Expense.firebase_uid == uid
     ).group_by(Expense.category).all()
 
-    category_allocations = {cat: float(amt) for cat, amt in category_query if cat}
+    category_summary = {cat: float(amt) for cat, amt in category_query if cat}
 
     return {
-        "total_spend": float(total_spend),
-        "monthly_spend": float(monthly_spend),
-        "recent_expenses": [ExpenseResponse.model_validate(e) for e in recent],
-        "category_allocations": category_allocations
+        "totalExpenses": float(total_spend),
+        "monthlyExpenses": float(monthly_spend),
+        "previousMonthlyExpenses": 0.0,
+        "recentTransactions": [ExpenseResponse.model_validate(e) for e in recent],
+        "categorySummary": category_summary
     }
 
 

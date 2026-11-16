@@ -33,7 +33,8 @@ class ExpenseResponse(BaseModel):
 
 
 class DashboardSummaryResponse(BaseModel):
-    total_spend: float
-    monthly_spend: float
-    recent_expenses: List[ExpenseResponse]
-    category_allocations: dict
+    totalExpenses: float
+    monthlyExpenses: float
+    previousMonthlyExpenses: float = 0.0
+    recentTransactions: List[ExpenseResponse]
+    categorySummary: dict

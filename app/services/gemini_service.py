@@ -47,6 +47,40 @@ User text: "{text}"
             return GeminiService._get_mock_parsed_response(text)
 
     @staticmethod
+    def generate_insights(expenses_summary: str) -> str:
+        api_key = settings.GEMINI_API_KEY
+        if not api_key:
+            return "### AI Insights (Demo Mode)\n\n- **Food & Dining:** Your highest spending category is Food. Consider setting a weekly dining budget.\n- **Savings Tip:** You could save approximately 15% by tracking recurring utility payments.\n- **Trend:** Spending is within healthy limits for this period."
+
+        url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key={api_key}"
+        prompt = f"""
+You are an elite AI personal financial advisor. Analyze the following user spending summary and provide concise, actionable financial advice in clean Markdown format with headers, bullet points, and bold text.
+
+User Spending Data Summary:
+{expenses_summary}
+
+Provide:
+1. Category Breakdown Analysis
+2. Smart Savings Recommendations
+3. Actionable Budget Tip
+"""
+        payload = {
+            "contents": [{
+                "parts": [{"text": prompt}]
+            }]
+        }
+
+        try:
+            res = requests.post(url, json=payload, timeout=12)
+            if res.status_code == 200:
+                data = res.json()
+                return data["candidates"][0]["content"]["parts"][0]["text"]
+            else:
+                return f"### AI Insights Unavailable\n\nGemini API status {res.status_code}. Please check your API key."
+        except Exception as e:
+            return f"### AI Insights Unavailable\n\nFailed to call Gemini API: {str(e)}"
+
+    @staticmethod
     def _clean_json_response(raw_response: str) -> str:
         if not raw_response:
             return "[]"
