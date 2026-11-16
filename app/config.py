@@ -12,8 +12,12 @@ def resolve_db_url() -> str:
     ).strip()
     if url.startswith("jdbc:"):
         url = url[len("jdbc:"):]
-    if url.startswith("postgres://"):
-        url = "postgresql://" + url[len("postgres://"):]
+    url = url.strip("'\" ")
+    # Normalise any postgres scheme to the installed psycopg2 driver
+    for prefix in ("postgresql+psycopg://", "postgresql+psycopg2://", "postgres://", "postgresql://"):
+        if url.startswith(prefix):
+            url = "postgresql://" + url[len(prefix):]
+            break
 
     # Spring-style setups keep credentials in separate env vars; merge them in
     # when the URL itself carries none (this caused "no password supplied").
